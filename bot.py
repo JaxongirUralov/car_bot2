@@ -9,7 +9,13 @@ from telegram.ext import (
 
 # ===== CONFIG =====
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
+ADMIN_ID = os.getenv("ADMIN_ID")
+
+if ADMIN_ID is None:
+    raise RuntimeError("ADMIN_ID is not set in Railway Variables")
+
+ADMIN_ID = int(ADMIN_ID)
+
 
 
 # ===== /start =====
