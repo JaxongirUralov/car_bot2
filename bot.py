@@ -7,27 +7,35 @@ from telegram.ext import (
     ContextTypes
 )
 
-# ===== CONFIG =====
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = os.getenv("ADMIN_ID")
+# ===== DEBUG (VERY IMPORTANT FOR NOW) =====
+print("DEBUG: BOT_TOKEN =", os.getenv("BOT_TOKEN"))
+print("DEBUG: ADMIN_ID  =", os.getenv("ADMIN_ID"))
 
-if ADMIN_ID is None:
-    raise RuntimeError("ADMIN_ID is not set in Railway Variables")
 
-ADMIN_ID = int(ADMIN_ID)
-
+# ===== HELPERS =====
+def get_admin_id():
+    admin_id = os.getenv("ADMIN_ID")
+    if not admin_id:
+        return None
+    return int(admin_id)
 
 
 # ===== /start =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Welcome!\nUse /admin if you are admin."
-    )
+    await update.message.reply_text("Bot is running ✅")
 
 
 # ===== /admin =====
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
+    admin_id = get_admin_id()
+
+    if admin_id is None:
+        await update.message.reply_text(
+            "❌ ADMIN_ID is not loaded from Railway variables"
+        )
+        return
+
+    if update.effective_user.id != admin_id:
         await update.message.reply_text("❌ You are not admin")
         return
 
@@ -37,11 +45,9 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("❌ Delete order", callback_data="delete_order")]
     ]
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
     await update.message.reply_text(
         "🔐 Super admin panel:",
-        reply_markup=reply_markup
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
@@ -62,7 +68,12 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ===== MAIN =====
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
+    token = os.getenv("BOT_TOKEN")
+
+    if not token:
+        raise RuntimeError("BOT_TOKEN is not set in Railway Variables")
+
+    app = Application.builder().token(token).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", admin))
